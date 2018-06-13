@@ -104,9 +104,6 @@ public class RefreshFolderOperation extends RemoteOperation {
      */
     private boolean mSyncFullAccount;
 
-    /** 'True' means that Share resources bound to the files into should be refreshed also */
-    private boolean mIsShareSupported;
-
     /** 'True' means that the remote folder changed and should be fetched */
     private boolean mRemoteFolderChanged;
 
@@ -124,7 +121,6 @@ public class RefreshFolderOperation extends RemoteOperation {
      * @param   currentSyncTime         Time stamp for the synchronization process in progress.
      * @param   syncFullAccount         'True' means that this operation is part of a full account 
      *                                  synchronization.
-     * @param   isShareSupported        'True' means that the server supports the sharing API.           
      * @param   ignoreETag              'True' means that the content of the remote folder should
      *                                  be fetched and updated even though the 'eTag' did not 
      *                                  change.  
@@ -135,7 +131,6 @@ public class RefreshFolderOperation extends RemoteOperation {
     public RefreshFolderOperation(OCFile folder,
                                   long currentSyncTime,
                                   boolean syncFullAccount,
-                                  boolean isShareSupported,
                                   boolean ignoreETag,
                                   FileDataStorageManager dataStorageManager,
                                   Account account,
@@ -143,7 +138,6 @@ public class RefreshFolderOperation extends RemoteOperation {
         mLocalFolder = folder;
         mCurrentSyncTime = currentSyncTime;
         mSyncFullAccount = syncFullAccount;
-        mIsShareSupported = isShareSupported;
         mStorageManager = dataStorageManager;
         mAccount = account;
         mContext = context;
@@ -218,7 +212,7 @@ public class RefreshFolderOperation extends RemoteOperation {
             );
         }
 
-        if (result.isSuccess() && mIsShareSupported && !mSyncFullAccount) {
+        if (result.isSuccess() && !mSyncFullAccount) {
             refreshSharesForFolder(client); // share result is ignored 
         }
 
@@ -236,8 +230,6 @@ public class RefreshFolderOperation extends RemoteOperation {
         UpdateOCVersionOperation update = new UpdateOCVersionOperation(mAccount, mContext);
         RemoteOperationResult result = update.execute(client);
         if (result.isSuccess()) {
-            mIsShareSupported = true;
-
             // Update Capabilities for this account
             updateCapabilities();
         }

@@ -22,7 +22,6 @@
 package com.owncloud.android.datamodel;
 
 import android.accounts.Account;
-import android.accounts.AccountManager;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -47,13 +46,11 @@ import android.widget.ImageView;
 
 import com.owncloud.android.MainApp;
 import com.owncloud.android.R;
-import com.owncloud.android.authentication.AccountUtils;
 import com.owncloud.android.lib.common.OwnCloudAccount;
 import com.owncloud.android.lib.common.OwnCloudClient;
 import com.owncloud.android.lib.common.OwnCloudClientManagerFactory;
 import com.owncloud.android.lib.common.operations.RemoteOperation;
 import com.owncloud.android.lib.common.utils.Log_OC;
-import com.owncloud.android.lib.resources.status.OwnCloudVersion;
 import com.owncloud.android.ui.TextDrawable;
 import com.owncloud.android.ui.adapter.DiskLruImageCache;
 import com.owncloud.android.ui.fragment.FileFragment;
@@ -546,10 +543,10 @@ public class ThumbnailsCacheManager {
                                 getMethod = new GetMethod(uri);
                                 getMethod.setRequestHeader("Cookie",
                                         "nc_sameSiteCookielax=true;nc_sameSiteCookiestrict=true");
-    
+
                                 getMethod.setRequestHeader(RemoteOperation.OCS_API_HEADER,
                                         RemoteOperation.OCS_API_HEADER_VALUE);
-    
+
                                 int status = mClient.executeMethod(getMethod);
                                 if (status == HttpStatus.SC_OK) {
                                     InputStream inputStream = getMethod.getResponseBodyAsStream();
@@ -558,7 +555,7 @@ public class ThumbnailsCacheManager {
                                 } else {
                                     mClient.exhaustResponse(getMethod.getResponseBodyAsStream());
                                 }
-    
+
                                 // Handle PNG
                                 if (file.getMimetype().equalsIgnoreCase(PNG_MIMETYPE)) {
                                     thumbnail = handlePNG(thumbnail, pxW, pxH);
@@ -569,6 +566,7 @@ public class ThumbnailsCacheManager {
                                 if (getMethod != null) {
                                     getMethod.releaseConnection();
                                 }
+                            }
                         }
                     }
 
@@ -581,7 +579,6 @@ public class ThumbnailsCacheManager {
             }
 
             return thumbnail;
-
         }
 
         /**
@@ -798,9 +795,9 @@ public class ThumbnailsCacheManager {
 
                 thumbnail = doAvatarInBackground();
 
-            } catch(OutOfMemoryError oome) {
+            } catch (OutOfMemoryError oome) {
                 Log_OC.e(TAG, "Out of memory");
-            } catch(Throwable t){
+            } catch (Throwable t) {
                 // the app should never break due to a problem with avatars
                 Log_OC.e(TAG, "Generation of avatar for " + mUserId + " failed", t);
             }
@@ -821,6 +818,7 @@ public class ThumbnailsCacheManager {
 
         /**
          * Converts size of file icon from dp to pixel
+         *
          * @return int
          */
         private int getAvatarDimension() {
@@ -852,9 +850,9 @@ public class ThumbnailsCacheManager {
 
                     // only use eTag if available and corresponding avatar is still there 
                     // (might be deleted from cache)
-                        if (!eTag.isEmpty() && getBitmapFromDiskCache(avatarKey) != null) {
-                            get.setRequestHeader("If-None-Match", eTag);
-                        }
+                    if (!eTag.isEmpty() && getBitmapFromDiskCache(avatarKey) != null) {
+                        get.setRequestHeader("If-None-Match", eTag);
+                    }
 
                     int status = mClient.executeMethod(get);
 
@@ -894,28 +892,26 @@ public class ThumbnailsCacheManager {
                             mClient.exhaustResponse(get.getResponseBodyAsStream());
                             break;
 
-                        }
-                    } catch (Exception e) {
-                        try {
-                            return TextDrawable.createAvatar(mAccount.name, mAvatarRadius);
-                        } catch (Exception e1) {
-                            Log_OC.e(TAG, "Error generating fallback avatar");
-                        }
-                    } finally {
-                        if (get != null) {
-                            get.releaseConnection();
-                        }
                     }
-                } else {
-                    Log_OC.d(TAG, "Server too old");
-
+                } catch (Exception e) {
                     try {
                         return TextDrawable.createAvatar(mAccount.name, mAvatarRadius);
-                    } catch (Exception e) {
+                    } catch (Exception e1) {
                         Log_OC.e(TAG, "Error generating fallback avatar");
                     }
+                } finally {
+                    if (get != null) {
+                        get.releaseConnection();
+                    }
+                }
+
+                try {
+                    return TextDrawable.createAvatar(mAccount.name, mAvatarRadius);
+                } catch (Exception e) {
+                    Log_OC.e(TAG, "Error generating fallback avatar");
                 }
             }
+
             return BitmapUtils.bitmapToCircularBitmapDrawable(mResources, avatar);
         }
     }
@@ -1070,6 +1066,7 @@ public class ThumbnailsCacheManager {
         }
         return null;
     }
+
 
     public static class AsyncThumbnailDrawable extends BitmapDrawable {
         private final WeakReference<ThumbnailGenerationTask> bitmapWorkerTaskReference;
